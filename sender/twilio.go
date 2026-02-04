@@ -88,7 +88,6 @@ func (s *TwilioSender) GetTemplates(ctx context.Context) ([]models.SavedTemplate
 	for i, c := range contents {
 		var body string
 
-		// Extract body from Types map
 		if c.Types != nil {
 			typesMap := *c.Types
 

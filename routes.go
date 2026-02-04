@@ -5,7 +5,26 @@ import (
 	"net/http"
 )
 
-func SetupRouter(messageHandler *handler.MessageHandler) *http.ServeMux {
+// CORSMiddleware adds CORS headers to all responses
+func CORSMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*") // Change "*" to specific domain in production
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		w.Header().Set("Access-Control-Max-Age", "3600")
+
+		// Handle preflight OPTIONS request
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+
+		// Call the next handler
+		next.ServeHTTP(w, r)
+	})
+}
+
+func SetupRouter(messageHandler *handler.MessageHandler) http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /templates", messageHandler.GetTemplates)
 	mux.HandleFunc("POST /templates", messageHandler.CreateTemplate)
@@ -13,5 +32,5 @@ func SetupRouter(messageHandler *handler.MessageHandler) *http.ServeMux {
 	mux.HandleFunc("POST /send-message", messageHandler.NormalMessage)
 	mux.HandleFunc("POST /send-template", messageHandler.TemplateMessage)
 
-	return mux
+	return CORSMiddleware(mux)
 }
