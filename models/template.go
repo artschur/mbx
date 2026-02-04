@@ -116,6 +116,7 @@ func (dto *CreateTemplateDTO) ToTwilioTypes() content.Types {
 }
 
 type SavedTemplate struct {
+	ContentId    string         `json:"content_id"`
 	FriendlyName string         `json:"friendly_name"`
 	Language     string         `json:"language"`
 	Body         string         `json:"body"`

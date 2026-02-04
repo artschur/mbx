@@ -7,7 +7,7 @@ import (
 
 func SetupRouter(messageHandler *handler.MessageHandler) *http.ServeMux {
 	mux := http.NewServeMux()
-	mux.HandleFunc("GET /templates", messageHandler.TemplateMessage)
+	mux.HandleFunc("GET /templates", messageHandler.GetTemplates)
 	mux.HandleFunc("POST /templates", messageHandler.CreateTemplate)
 
 	mux.HandleFunc("POST /send-message", messageHandler.NormalMessage)

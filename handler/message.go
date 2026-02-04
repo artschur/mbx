@@ -148,6 +148,7 @@ func (h *MessageHandler) GetTemplates(w http.ResponseWriter, r *http.Request) {
 func (h *MessageHandler) CreateTemplate(w http.ResponseWriter, r *http.Request) {
 	var req models.CreateTemplateDTO
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		slog.Error("Failed to decode create template request", "error", err)
 		http.Error(w, "Invalid request payload", http.StatusBadRequest)
 		return
 	}

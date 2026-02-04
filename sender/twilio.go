@@ -69,7 +69,6 @@ func (s *TwilioSender) SendTemplate(ctx context.Context, template models.Whatsap
 
 	return resp, nil
 }
-
 func (s *TwilioSender) GetTemplates(ctx context.Context) ([]models.SavedTemplate, error) {
 	contentService := content.NewApiServiceWithClient(s.client.Client)
 
@@ -78,30 +77,39 @@ func (s *TwilioSender) GetTemplates(ctx context.Context) ([]models.SavedTemplate
 	contentParams.SetPageSize(1000)
 
 	slog.Info("Fetching WhatsApp templates")
-	content, err := contentService.ListContent(contentParams)
+	contents, err := contentService.ListContent(contentParams)
 	if err != nil {
 		return nil, err
 	}
 
-	slog.Info("Fetched WhatsApp templates", "count", len(content))
+	slog.Info("Fetched WhatsApp templates", "count", len(contents))
 
-	var templatesOut []models.SavedTemplate = make([]models.SavedTemplate, len(content))
-	for i, c := range content {
+	var templatesOut []models.SavedTemplate = make([]models.SavedTemplate, len(contents))
+	for i, c := range contents {
 		var body string
+
+		// Extract body from Types map
 		if c.Types != nil {
-			for _, t := range *c.Types {
-				if typ, ok := t.(map[string]interface{}); ok {
-					if typeStr, ok := typ["type"].(string); ok {
-						contentType := models.ContentType(typeStr)
-						if contentType == models.ContentTypeTwilioText {
-							if bodyVal, ok := typ["body"].(string); ok {
-								body = bodyVal
-								break
-							}
-						}
+			typesMap := *c.Types
+
+			// Check for twilio/text type
+			if textType, ok := typesMap["twilio/text"]; ok {
+				if textMap, ok := textType.(map[string]interface{}); ok {
+					if bodyVal, ok := textMap["body"].(string); ok {
+						body = bodyVal
 					}
 				}
 			}
+			// Check for twilio/call-to-action type
+			if ctaType, ok := typesMap["twilio/call-to-action"]; ok {
+				if ctaMap, ok := ctaType.(map[string]interface{}); ok {
+					if bodyVal, ok := ctaMap["body"].(string); ok {
+						body = bodyVal
+					}
+				}
+			}
+
+			// Add more types as needed (twilio/card, twilio/quick-reply, etc.)
 		}
 
 		friendlyName := ""
@@ -125,17 +133,23 @@ func (s *TwilioSender) GetTemplates(ctx context.Context) ([]models.SavedTemplate
 			dateUpdated = c.DateUpdated.String()
 		}
 
+		contentId := ""
+		if c.Sid != nil {
+			contentId = *c.Sid
+		}
+
 		template := models.SavedTemplate{
+			ContentId:    contentId,
 			FriendlyName: friendlyName,
 			Language:     language,
 			Variables:    variables,
+			Types:        c.Types,
 			Body:         body,
 			DateCreated:  dateCreated,
 			DateUpdated:  dateUpdated,
 		}
 
 		templatesOut[i] = template
-
 	}
 
 	return templatesOut, nil
@@ -144,24 +158,15 @@ func (s *TwilioSender) GetTemplates(ctx context.Context) ([]models.SavedTemplate
 func (s *TwilioSender) CreateTemplate(ctx context.Context, dto models.CreateTemplateDTO) (*models.SavedTemplate, error) {
 	contentService := content.NewApiServiceWithClient(s.client.Client)
 
-	// Convert DTO to Twilio's types format
+	// Convert DTO to Twilio's Types struct
 	types := dto.ToTwilioTypes()
-
-	// Prepare variables - convert to map[string]interface{}
-	var variables map[string]string
-	if dto.Variables != nil {
-		variables = make(map[string]string)
-		for k, v := range dto.Variables {
-			variables[k] = v
-		}
-	}
 
 	createParams := &content.CreateContentParams{
 		ContentCreateRequest: &content.ContentCreateRequest{
 			FriendlyName: dto.FriendlyName,
 			Language:     dto.Language,
 			Types:        types,
-			Variables:    variables,
+			Variables:    dto.Variables,
 		},
 	}
 
@@ -195,12 +200,35 @@ func (s *TwilioSender) CreateTemplate(ctx context.Context, dto models.CreateTemp
 		dateUpdated = createdContent.DateUpdated.String()
 	}
 
+	// Extract body from the Types response
+	var body string
+	if createdContent.Types != nil {
+		typesMap := *createdContent.Types
+		// Check for twilio/text type
+		if textType, ok := typesMap["twilio/text"]; ok {
+			if textMap, ok := textType.(map[string]interface{}); ok {
+				if bodyVal, ok := textMap["body"].(string); ok {
+					body = bodyVal
+				}
+			}
+		}
+		// Check for twilio/call-to-action type
+		if ctaType, ok := typesMap["twilio/call-to-action"]; ok {
+			if ctaMap, ok := ctaType.(map[string]interface{}); ok {
+				if bodyVal, ok := ctaMap["body"].(string); ok {
+					body = bodyVal
+				}
+			}
+		}
+	}
+
 	createdTemplate := &models.SavedTemplate{
+		ContentId:    *createdContent.Sid,
 		FriendlyName: friendlyName,
 		Language:     language,
 		Variables:    vars,
 		Types:        createdContent.Types,
-		Body:         dto.Body,
+		Body:         body,
 		DateCreated:  dateCreated,
 		DateUpdated:  dateUpdated,
 	}
