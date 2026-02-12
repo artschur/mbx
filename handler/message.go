@@ -86,6 +86,8 @@ func (h *MessageHandler) TemplateMessage(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	slog.Info("Received template message request", "to", req.To, "template_id", req.TemplateId, "content", req.Content, "language", req.Language)
+
 	// Validate required fields
 	if req.TemplateId == "" {
 		http.Error(w, "Template ID cannot be empty", http.StatusBadRequest)
@@ -103,10 +105,23 @@ func (h *MessageHandler) TemplateMessage(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	var contentStr string
+	if len(req.Content) > 0 {
+		contentJSON, err := json.Marshal(req.Content)
+		if err != nil {
+			slog.Error("Failed to marshal content variables", "error", err)
+			http.Error(w, "Invalid content variables", http.StatusBadRequest)
+			return
+		}
+		contentStr = string(contentJSON)
+	}
+
+	slog.Info("Marshaled content variables", "content_json", contentStr)
+
 	whatsappTemplate := models.WhatsappTemplate{
 		To:          req.To,
 		TemplateId:  req.TemplateId,
-		Content:     req.Content,
+		Content:     contentStr,
 		Language:    req.Language,
 		TimeFromNow: scheduledTime,
 	}

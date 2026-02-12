@@ -52,11 +52,15 @@ func (s *TwilioSender) Send(ctx context.Context, message models.WhatsappBody) (*
 
 func (s *TwilioSender) SendTemplate(ctx context.Context, template models.WhatsappTemplate) (*api.ApiV2010Message, error) {
 	messageParams := &api.CreateMessageParams{
-		To:               &template.To,
-		From:             &s.cfg.TwilioFromNumber,
-		ContentSid:       &template.TemplateId,
-		ContentVariables: &template.Content,
+		To:         &template.To,
+		From:       &s.cfg.TwilioFromNumber,
+		ContentSid: &template.TemplateId,
+		ContentVariables: ,
 	}
+
+	messageParams.SetTo("+18777804236")
+	messageParams.SetFrom("+12244811393")
+
 
 	if template.TimeFromNow != nil {
 		messageParams.SendAt = template.TimeFromNow
