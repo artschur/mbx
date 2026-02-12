@@ -28,6 +28,7 @@ func NewTwilioSender(cfg *Config) *TwilioSender {
 
 	return &TwilioSender{
 		client: client,
+		cfg:    cfg,
 	}
 }
 
@@ -51,16 +52,20 @@ func (s *TwilioSender) Send(ctx context.Context, message models.WhatsappBody) (*
 }
 
 func (s *TwilioSender) SendTemplate(ctx context.Context, template models.WhatsappTemplate) (*api.ApiV2010Message, error) {
-	messageParams := &api.CreateMessageParams{
-		To:         &template.To,
-		From:       &s.cfg.TwilioFromNumber,
-		ContentSid: &template.TemplateId,
-		ContentVariables: ,
+	messageParams := &api.CreateMessageParams{}
+
+	messageParams.SetTo(fmt.Sprintf("whatsapp:%s", template.To))
+	messageParams.SetFrom(fmt.Sprintf("whatsapp:%s", s.cfg.TwilioFromNumber))
+
+	messageParams.SetContentSid(template.TemplateId)
+
+	if template.Content != "" && template.Content != "{}" && template.Content != "null" {
+		messageParams.SetContentVariables(template.Content)
 	}
 
-	messageParams.SetTo("+18777804236")
-	messageParams.SetFrom("+12244811393")
-
+	slog.Info("Sending template message with parameters",
+		"template_id", template.TemplateId,
+		"content_variables", template.Content)
 
 	if template.TimeFromNow != nil {
 		messageParams.SendAt = template.TimeFromNow
@@ -70,6 +75,7 @@ func (s *TwilioSender) SendTemplate(ctx context.Context, template models.Whatsap
 	if err != nil {
 		return nil, fmt.Errorf("failed to send message: %v", err)
 	}
+	slog.Info("Sent template message", "sid", *resp.Sid)
 
 	return resp, nil
 }
@@ -91,7 +97,6 @@ func (s *TwilioSender) GetTemplates(ctx context.Context) ([]models.SavedTemplate
 	var templatesOut []models.SavedTemplate = make([]models.SavedTemplate, len(contents))
 	for i, c := range contents {
 		var body string
-
 		if c.Types != nil {
 			typesMap := *c.Types
 
