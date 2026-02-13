@@ -39,7 +39,9 @@ func main() {
 	twilioFetcher := sender.NewTwilioFetcher(twilioClient, cfg)
 
 	messageHandler := handler.NewMessageHandler(twilioSender, twilioFetcher)
-	router := mbx.SetupRouter(messageHandler)
+	templateHandler := handler.NewTemplateHandler(twilioSender, twilioFetcher)
+
+	router := mbx.SetupRouter(messageHandler, templateHandler)
 
 	server := &http.Server{
 		Addr:    ":8765",

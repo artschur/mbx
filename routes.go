@@ -24,17 +24,17 @@ func CORSMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func SetupRouter(messageHandler *handler.MessageHandler) http.Handler {
+func SetupRouter(messageHandler *handler.MessageHandler, templateHandler *handler.TemplateHandler) http.Handler {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("GET /messages", messageHandler.GetMessages)
 	mux.HandleFunc("POST /messages/cancel", messageHandler.CancelMessage)
 
-	mux.HandleFunc("GET /templates", messageHandler.GetTemplates)
-	mux.HandleFunc("POST /templates", messageHandler.CreateTemplate)
+	mux.HandleFunc("GET /templates", templateHandler.GetTemplates)
+	mux.HandleFunc("POST /templates", templateHandler.CreateTemplate)
 
 	mux.HandleFunc("POST /send-message", messageHandler.NormalMessage)
-	mux.HandleFunc("POST /send-template", messageHandler.TemplateMessage)
+	mux.HandleFunc("POST /send-template", templateHandler.TemplateMessage)
 
 	return CORSMiddleware(mux)
 }
