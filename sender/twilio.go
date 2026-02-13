@@ -8,6 +8,7 @@ import (
 
 	"github.com/twilio/twilio-go"
 	api "github.com/twilio/twilio-go/rest/api/v2010"
+	openapi "github.com/twilio/twilio-go/rest/api/v2010"
 	content "github.com/twilio/twilio-go/rest/content/v1"
 )
 
@@ -163,4 +164,24 @@ func (s *TwilioSender) CreateTemplate(ctx context.Context, dto models.CreateTemp
 	}
 
 	return createdTemplate, nil
+}
+
+func (s *TwilioSender) CancelTemplateMessage(ctx context.Context, twilioId string) error {
+	canceled := "canceled"
+	updateMessageParams := &openapi.UpdateMessageParams{
+		Status: &canceled,
+	}
+
+	slog.Info("Canceling WhatsApp template message", "sid", twilioId)
+	msg, err := s.client.Api.UpdateMessage(twilioId, updateMessageParams)
+	if err != nil {
+		return fmt.Errorf("failed to cancel template message: %v", err)
+	}
+
+	if msg.Status == nil || *msg.Status != canceled {
+		return fmt.Errorf("unexpected message status after cancellation: %v", msg.Status)
+	}
+
+	slog.Info("Canceled WhatsApp template message", "sid", twilioId)
+	return nil
 }
