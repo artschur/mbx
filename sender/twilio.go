@@ -166,7 +166,7 @@ func (s *TwilioSender) CreateTemplate(ctx context.Context, dto models.CreateTemp
 	return createdTemplate, nil
 }
 
-func (s *TwilioSender) CancelTemplateMessage(ctx context.Context, twilioId string) error {
+func (s *TwilioSender) CancelMessage(ctx context.Context, twilioId string) error {
 	canceled := "canceled"
 	updateMessageParams := &openapi.UpdateMessageParams{
 		Status: &canceled,

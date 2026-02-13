@@ -229,3 +229,28 @@ func (h *MessageHandler) CreateTemplate(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 }
+
+func (h *MessageHandler) CancelMessage(w http.ResponseWriter, r *http.Request) {
+	incReq := struct {
+		TwilioMessageId string `json:"message_id"`
+	}{}
+	if err := json.NewDecoder(r.Body).Decode(&incReq); err != nil {
+		slog.Error("Failed to decode cancel message request", "error", err)
+		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		return
+	}
+
+	if incReq.TwilioMessageId == "" {
+		http.Error(w, "Message ID cannot be empty", http.StatusBadRequest)
+		return
+	}
+
+	err := h.sender.CancelMessage(r.Context(), incReq.TwilioMessageId)
+	if err != nil {
+		slog.Error("Failed to cancel message", "error", err, "message_id", incReq.TwilioMessageId)
+		http.Error(w, "Failed to cancel message: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
