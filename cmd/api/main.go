@@ -33,8 +33,12 @@ func main() {
 		TwilioFromNumber: fromNumber,
 	}
 
-	twilioSender := sender.NewTwilioSender(cfg)
-	messageHandler := handler.NewMessageHandler(twilioSender)
+	twilioClient := sender.NewTwilioClient(cfg)
+
+	twilioSender := sender.NewTwilioSender(twilioClient, cfg)
+	twilioFetcher := sender.NewTwilioFetcher(twilioClient, cfg)
+
+	messageHandler := handler.NewMessageHandler(twilioSender, twilioFetcher)
 	router := mbx.SetupRouter(messageHandler)
 
 	server := &http.Server{

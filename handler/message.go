@@ -10,12 +10,14 @@ import (
 )
 
 type MessageHandler struct {
-	whatsapp sender.WhatsappSender
+	sender  sender.WhatsappSender
+	fetcher sender.WhatsappFetcher
 }
 
-func NewMessageHandler(whatsapp sender.WhatsappSender) *MessageHandler {
+func NewMessageHandler(whatsapp sender.WhatsappSender, fetcher sender.WhatsappFetcher) *MessageHandler {
 	return &MessageHandler{
-		whatsapp: whatsapp,
+		sender:  whatsapp,
+		fetcher: fetcher,
 	}
 }
 
@@ -30,6 +32,35 @@ func (h *MessageHandler) parseScheduledTime(timeStr string) (*time.Time, error) 
 	}
 
 	return &parsedTime, nil
+}
+
+func (h *MessageHandler) GetMessages(w http.ResponseWriter, r *http.Request) {
+	afterStr := r.URL.Query().Get("after")
+	if afterStr == "" {
+		http.Error(w, "Missing 'after' query parameter", http.StatusBadRequest)
+		return
+	}
+
+	afterTime, err := time.Parse("2006-01-02", afterStr)
+	if err != nil {
+		http.Error(w, "Invalid 'after' time format. Use YYYY-MM-DD format", http.StatusBadRequest)
+		return
+	}
+
+	messages, err := h.fetcher.GetMessages(r.Context(), afterTime)
+	if err != nil {
+		slog.Error("Failed to retrieve messages", "error", err)
+		http.Error(w, "Failed to retrieve messages", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	err = json.NewEncoder(w).Encode(messages)
+	if err != nil {
+		slog.Error("Failed to encode messages response", "error", err)
+		http.Error(w, "Failed to encode messages response", http.StatusInternalServerError)
+		return
+	}
 }
 
 func (h *MessageHandler) NormalMessage(w http.ResponseWriter, r *http.Request) {
@@ -62,7 +93,7 @@ func (h *MessageHandler) NormalMessage(w http.ResponseWriter, r *http.Request) {
 		TimeFromNow: scheduledTime,
 	}
 
-	msgResponse, err := h.whatsapp.Send(r.Context(), whatsappMessage)
+	msgResponse, err := h.sender.Send(r.Context(), whatsappMessage)
 	if err != nil {
 		slog.Error("Failed to send message", "error", err)
 		http.Error(w, "Failed to send message", http.StatusInternalServerError)
@@ -126,7 +157,7 @@ func (h *MessageHandler) TemplateMessage(w http.ResponseWriter, r *http.Request)
 		TimeFromNow: scheduledTime,
 	}
 
-	msgResponse, err := h.whatsapp.SendTemplate(r.Context(), whatsappTemplate)
+	msgResponse, err := h.sender.SendTemplate(r.Context(), whatsappTemplate)
 	if err != nil {
 		slog.Error("Failed to send template message", "error", err)
 		http.Error(w, "Failed to send template message", http.StatusInternalServerError)
@@ -144,7 +175,7 @@ func (h *MessageHandler) TemplateMessage(w http.ResponseWriter, r *http.Request)
 }
 
 func (h *MessageHandler) GetTemplates(w http.ResponseWriter, r *http.Request) {
-	templates, err := h.whatsapp.GetTemplates(r.Context())
+	templates, err := h.fetcher.GetTemplates(r.Context())
 	if err != nil {
 		slog.Error("Failed to retrieve templates", "error", err)
 		http.Error(w, "Failed to retrieve templates", http.StatusInternalServerError)
@@ -183,7 +214,7 @@ func (h *MessageHandler) CreateTemplate(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// Create the template
-	createdTemplate, err := h.whatsapp.CreateTemplate(r.Context(), req)
+	createdTemplate, err := h.sender.CreateTemplate(r.Context(), req)
 	if err != nil {
 		slog.Error("Failed to create template", "error", err)
 		http.Error(w, "Failed to create template: "+err.Error(), http.StatusInternalServerError)

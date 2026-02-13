@@ -18,7 +18,7 @@ type TwilioSender struct {
 
 var _ WhatsappSender = (*TwilioSender)(nil)
 
-func NewTwilioSender(cfg *Config) *TwilioSender {
+func NewTwilioClient(cfg *Config) *twilio.RestClient {
 
 	client := twilio.NewRestClientWithParams(twilio.ClientParams{
 		Username:   cfg.TwilioAccountSID,
@@ -26,6 +26,10 @@ func NewTwilioSender(cfg *Config) *TwilioSender {
 		AccountSid: cfg.TwilioAccountSID,
 	})
 
+	return client
+}
+
+func NewTwilioSender(client *twilio.RestClient, cfg *Config) *TwilioSender {
 	return &TwilioSender{
 		client: client,
 		cfg:    cfg,
@@ -78,89 +82,6 @@ func (s *TwilioSender) SendTemplate(ctx context.Context, template models.Whatsap
 	slog.Info("Sent template message", "sid", *resp.Sid)
 
 	return resp, nil
-}
-func (s *TwilioSender) GetTemplates(ctx context.Context) ([]models.SavedTemplate, error) {
-	contentService := content.NewApiServiceWithClient(s.client.Client)
-
-	contentParams := &content.ListContentParams{}
-	contentParams.SetLimit(100)
-	contentParams.SetPageSize(1000)
-
-	slog.Info("Fetching WhatsApp templates")
-	contents, err := contentService.ListContent(contentParams)
-	if err != nil {
-		return nil, err
-	}
-
-	slog.Info("Fetched WhatsApp templates", "count", len(contents))
-
-	var templatesOut []models.SavedTemplate = make([]models.SavedTemplate, len(contents))
-	for i, c := range contents {
-		var body string
-		if c.Types != nil {
-			typesMap := *c.Types
-
-			// Check for twilio/text type
-			if textType, ok := typesMap["twilio/text"]; ok {
-				if textMap, ok := textType.(map[string]interface{}); ok {
-					if bodyVal, ok := textMap["body"].(string); ok {
-						body = bodyVal
-					}
-				}
-			}
-			// Check for twilio/call-to-action type
-			if ctaType, ok := typesMap["twilio/call-to-action"]; ok {
-				if ctaMap, ok := ctaType.(map[string]interface{}); ok {
-					if bodyVal, ok := ctaMap["body"].(string); ok {
-						body = bodyVal
-					}
-				}
-			}
-
-			// Add more types as needed (twilio/card, twilio/quick-reply, etc.)
-		}
-
-		friendlyName := ""
-		if c.FriendlyName != nil {
-			friendlyName = *c.FriendlyName
-		}
-		language := ""
-		if c.Language != nil {
-			language = *c.Language
-		}
-		variables := make(map[string]any)
-		if c.Variables != nil {
-			variables = *c.Variables
-		}
-		dateCreated := ""
-		if c.DateCreated != nil {
-			dateCreated = c.DateCreated.String()
-		}
-		dateUpdated := ""
-		if c.DateUpdated != nil {
-			dateUpdated = c.DateUpdated.String()
-		}
-
-		contentId := ""
-		if c.Sid != nil {
-			contentId = *c.Sid
-		}
-
-		template := models.SavedTemplate{
-			ContentId:    contentId,
-			FriendlyName: friendlyName,
-			Language:     language,
-			Variables:    variables,
-			Types:        c.Types,
-			Body:         body,
-			DateCreated:  dateCreated,
-			DateUpdated:  dateUpdated,
-		}
-
-		templatesOut[i] = template
-	}
-
-	return templatesOut, nil
 }
 
 func (s *TwilioSender) CreateTemplate(ctx context.Context, dto models.CreateTemplateDTO) (*models.SavedTemplate, error) {

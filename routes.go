@@ -26,6 +26,9 @@ func CORSMiddleware(next http.Handler) http.Handler {
 
 func SetupRouter(messageHandler *handler.MessageHandler) http.Handler {
 	mux := http.NewServeMux()
+
+	mux.HandleFunc("GET /messages", messageHandler.GetMessages)
+
 	mux.HandleFunc("GET /templates", messageHandler.GetTemplates)
 	mux.HandleFunc("POST /templates", messageHandler.CreateTemplate)
 
