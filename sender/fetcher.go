@@ -2,13 +2,9 @@ package sender
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"io"
 	"log/slog"
 	"mbx/models"
-	"net/http"
-	"net/url"
 	"time"
 
 	"github.com/twilio/twilio-go"
@@ -20,7 +16,7 @@ import (
 type WhatsappFetcher interface {
 	GetTemplates(context.Context) ([]models.SavedTemplate, error)
 	GetMessages(ctx context.Context, after time.Time) ([]models.SentMessage, error)
-	GetScheduledMessages(ctx context.Context, messagingServiceSid string) ([]models.SentMessage, error)
+	GetScheduledMessages(ctx context.Context, after time.Time) ([]models.SentMessage, error)
 	ListMessagingServices(ctx context.Context) ([]models.MessagingService, error)
 }
 
@@ -73,74 +69,21 @@ func (s *TwilioFetcher) ListMessagingServices(ctx context.Context) ([]models.Mes
 	return messagingServices, nil
 }
 
-func (s *TwilioFetcher) GetScheduledMessages(ctx context.Context, messagingServiceSid string) ([]models.SentMessage, error) {
-	// IMPORTANT: This is the Messaging API v1, NOT the 2010-04-01 API
-	baseURL := fmt.Sprintf("https://messaging.twilio.com/v1/Services/%s/Messages", messagingServiceSid)
-
-	params := url.Values{}
-	params.Set("Status", "scheduled") // Filter for scheduled messages
-	params.Set("PageSize", "1000")
-
-	fullURL := baseURL + "?" + params.Encode()
-
-	req, err := http.NewRequestWithContext(ctx, "GET", fullURL, nil)
+func (s *TwilioFetcher) GetScheduledMessages(ctx context.Context, after time.Time) ([]models.SentMessage, error) {
+	msgs, err := s.GetMessages(ctx, after)
 	if err != nil {
-		return nil, fmt.Errorf("error creating request: %w", err)
+		return nil, err
 	}
 
-	// Use your Twilio credentials for basic auth
-	req.SetBasicAuth(s.cfg.TwilioAccountSID, s.cfg.TwilioAuthToken)
-
-	client := &http.Client{Timeout: 10 * time.Second}
-	resp, err := client.Do(req)
-	if err != nil {
-		slog.Error("Error fetching scheduled messages", "error", err)
-		return nil, fmt.Errorf("error fetching scheduled messages: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
-		slog.Error("Twilio Messaging API error", "status", resp.StatusCode, "body", string(body))
-		return nil, fmt.Errorf("messaging API returned status %d: %s", resp.StatusCode, string(body))
-	}
-
-	var response struct {
-		Messages []struct {
-			Sid    *string `json:"sid"`
-			To     *string `json:"to"`
-			Body   *string `json:"body"`
-			SendAt *string `json:"send_at"` // Note: scheduled time, not date_sent
-			Status *string `json:"status"`
-			// Add other fields as needed
-		} `json:"messages"`
-		Meta struct {
-			Page         int    `json:"page"`
-			PageSize     int    `json:"page_size"`
-			FirstPageURL string `json:"first_page_url"`
-			NextPageURL  string `json:"next_page_url"`
-		} `json:"meta"`
-	}
-
-	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
-		return nil, fmt.Errorf("error decoding response: %w", err)
-	}
-
-	slog.Info("Fetched scheduled messages", "count", len(response.Messages), "serviceSid", messagingServiceSid)
-
-	sentMessages := make([]models.SentMessage, len(response.Messages))
-	for i, msg := range response.Messages {
-		sentMessages[i] = models.SentMessage{
-			ID:     sp(msg.Sid),
-			To:     sp(msg.To),
-			Body:   sp(msg.Body),
-			Status: sp(msg.Status),
-			// You might want to add SendAt to your model
-			// SendAt: sp(msg.SendAt),
+	var scheduledMessages []models.SentMessage
+	for _, msg := range msgs {
+		if msg.Status == "scheduled" {
+			scheduledMessages = append(scheduledMessages, msg)
 		}
 	}
 
-	return sentMessages, nil
+	slog.Info("Filtered scheduled messages", "count", len(scheduledMessages), "after", after)
+	return scheduledMessages, nil
 }
 
 func (s *TwilioFetcher) GetMessages(ctx context.Context, after time.Time) ([]models.SentMessage, error) {

@@ -6,6 +6,7 @@ import (
 	"mbx/models"
 	"mbx/sender"
 	"net/http"
+	"time"
 )
 
 type TemplateHandler struct {
@@ -38,22 +39,7 @@ func (h *TemplateHandler) ListMessagingServices(w http.ResponseWriter, r *http.R
 }
 
 func (h *TemplateHandler) GetScheduledMessages(w http.ResponseWriter, r *http.Request) {
-	type ScheduledMessagesRequest struct {
-		MessagingServiceSid string `json:"messaging_service_sid"`
-	}
-
-	var req ScheduledMessagesRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request payload", http.StatusBadRequest)
-		return
-	}
-
-	if req.MessagingServiceSid == "" {
-		http.Error(w, "Messaging Service SID cannot be empty", http.StatusBadRequest)
-		return
-	}
-
-	messages, err := h.fetcher.GetScheduledMessages(r.Context(), req.MessagingServiceSid)
+	messages, err := h.fetcher.GetScheduledMessages(r.Context(), time.Now())
 	if err != nil {
 		slog.Error("Failed to retrieve scheduled messages", "error", err)
 		http.Error(w, "Failed to retrieve scheduled messages", http.StatusInternalServerError)
