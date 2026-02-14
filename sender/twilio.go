@@ -62,6 +62,7 @@ func (s *TwilioSender) SendTemplate(ctx context.Context, template models.Whatsap
 	messageParams.SetTo(fmt.Sprintf("whatsapp:%s", template.To))
 	messageParams.SetFrom(fmt.Sprintf("whatsapp:%s", s.cfg.TwilioFromNumber))
 
+	messageParams.SetStatusCallback("https://mbx-sender-callbacks.fly.dev/api/v1/callbacks/twilio")
 	messageParams.SetContentSid(template.TemplateId)
 
 	if template.Content != "" && template.Content != "{}" && template.Content != "null" {

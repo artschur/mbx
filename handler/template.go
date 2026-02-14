@@ -20,6 +20,23 @@ func NewTemplateHandler(whatsapp sender.WhatsappSender, fetcher sender.WhatsappF
 	}
 }
 
+func (h *TemplateHandler) ListMessagingServices(w http.ResponseWriter, r *http.Request) {
+	services, err := h.fetcher.ListMessagingServices(r.Context())
+	if err != nil {
+		slog.Error("Failed to retrieve messaging services", "error", err)
+		http.Error(w, "Failed to retrieve messaging services", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	err = json.NewEncoder(w).Encode(services)
+	if err != nil {
+		slog.Error("Failed to encode messaging services response", "error", err)
+		http.Error(w, "Failed to encode messaging services response", http.StatusInternalServerError)
+		return
+	}
+}
+
 func (h *TemplateHandler) GetScheduledMessages(w http.ResponseWriter, r *http.Request) {
 	type ScheduledMessagesRequest struct {
 		MessagingServiceSid string `json:"messaging_service_sid"`

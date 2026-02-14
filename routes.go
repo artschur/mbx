@@ -32,6 +32,7 @@ func SetupRouter(messageHandler *handler.MessageHandler, templateHandler *handle
 	mux.HandleFunc("POST /messages/cancel", messageHandler.CancelMessage)
 
 	mux.HandleFunc("GET /templates", templateHandler.GetTemplates)
+	mux.HandleFunc("GET /templates/services", templateHandler.GetTemplates)
 	mux.HandleFunc("POST /templates", templateHandler.CreateTemplate)
 
 	mux.HandleFunc("POST /send-message", messageHandler.NormalMessage)
