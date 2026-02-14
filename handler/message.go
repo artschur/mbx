@@ -6,6 +6,7 @@ import (
 	"mbx/models"
 	"mbx/sender"
 	"net/http"
+	"slices"
 	"time"
 )
 
@@ -44,6 +45,14 @@ func (h *MessageHandler) GetMessages(w http.ResponseWriter, r *http.Request) {
 	afterTime, err := time.Parse("2006-01-02", afterStr)
 	if err != nil {
 		http.Error(w, "Invalid 'after' time format. Use YYYY-MM-DD format", http.StatusBadRequest)
+		return
+	}
+
+	status := r.URL.Query().Get("status")
+
+	validStatuses := []string{"", "sent", "read", "delivered", "failed", "scheduled", "queued", "sending"}
+	if status != "" && !slices.Contains(validStatuses, status) {
+		http.Error(w, "Invalid 'status' value", http.StatusBadRequest)
 		return
 	}
 

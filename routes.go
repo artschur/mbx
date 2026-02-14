@@ -28,6 +28,7 @@ func SetupRouter(messageHandler *handler.MessageHandler, templateHandler *handle
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("GET /messages", messageHandler.GetMessages)
+	mux.HandleFunc("GET /messages/templates", templateHandler.GetScheduledMessages)
 	mux.HandleFunc("POST /messages/cancel", messageHandler.CancelMessage)
 
 	mux.HandleFunc("GET /templates", templateHandler.GetTemplates)
@@ -35,6 +36,8 @@ func SetupRouter(messageHandler *handler.MessageHandler, templateHandler *handle
 
 	mux.HandleFunc("POST /send-message", messageHandler.NormalMessage)
 	mux.HandleFunc("POST /send-template", templateHandler.TemplateMessage)
+
+	// mux.HandleFunc("POST /callbacks/twilio", messageHandler.GetMessages)
 
 	return CORSMiddleware(mux)
 }

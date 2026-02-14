@@ -20,6 +20,38 @@ func NewTemplateHandler(whatsapp sender.WhatsappSender, fetcher sender.WhatsappF
 	}
 }
 
+func (h *TemplateHandler) GetScheduledMessages(w http.ResponseWriter, r *http.Request) {
+	type ScheduledMessagesRequest struct {
+		MessagingServiceSid string `json:"messaging_service_sid"`
+	}
+
+	var req ScheduledMessagesRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		return
+	}
+
+	if req.MessagingServiceSid == "" {
+		http.Error(w, "Messaging Service SID cannot be empty", http.StatusBadRequest)
+		return
+	}
+
+	messages, err := h.fetcher.GetScheduledMessages(r.Context(), req.MessagingServiceSid)
+	if err != nil {
+		slog.Error("Failed to retrieve scheduled messages", "error", err)
+		http.Error(w, "Failed to retrieve scheduled messages", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	err = json.NewEncoder(w).Encode(messages)
+	if err != nil {
+		slog.Error("Failed to encode scheduled messages response", "error", err)
+		http.Error(w, "Failed to encode scheduled messages response", http.StatusInternalServerError)
+		return
+	}
+}
+
 func (h *TemplateHandler) TemplateMessage(w http.ResponseWriter, r *http.Request) {
 	var req models.WhatsappTemplateDTO
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
