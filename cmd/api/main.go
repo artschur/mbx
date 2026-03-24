@@ -2,22 +2,44 @@ package main
 
 import (
 	"context"
+	"database/sql"
+	_ "github.com/lib/pq"
 	"log"
 	"log/slog"
 	"mbx"
-	"mbx/handler"
+	"mbx/messaging"
+	"mbx/models"
+	"mbx/persistence/postgres"
 	"mbx/sender"
+	"mbx/template"
+	"mbx/webhook"
+	webhookPostgres "mbx/webhook/persistence/postgres"
+	"mbx/worker"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+
+	api "github.com/twilio/twilio-go/rest/api/v2010"
 )
 
 func main() {
+	dbURL := os.Getenv("DATABASE_URL")
+	if dbURL == "" {
+		dbURL = "postgres://postgres:postgres@localhost:5432/mbx?sslmode=disable"
+	}
+
+	db, err := sql.Open("postgres", dbURL)
+	if err != nil {
+		log.Fatalf("Failed to connect to database: %v", err)
+	}
+	defer db.Close()
+
 	accountSid := os.Getenv("TWILIO_ACCOUNT_SID")
 	authToken := os.Getenv("TWILIO_AUTH_TOKEN")
 	fromNumber := os.Getenv("TWILIO_FROM_NUMBER")
+
 	if fromNumber == "" {
 		slog.Error("TWILIO_FROM_NUMBER environment variable is required")
 		return
@@ -38,10 +60,43 @@ func main() {
 	twilioSender := sender.NewTwilioSender(twilioClient, cfg)
 	twilioFetcher := sender.NewTwilioFetcher(twilioClient, cfg)
 
-	messageHandler := handler.NewMessageHandler(twilioSender, twilioFetcher)
-	templateHandler := handler.NewTemplateHandler(twilioSender, twilioFetcher)
+	// Persistence
+	templateRepo := postgres.NewTemplateRepository(db)
+	webhookRepo := webhookPostgres.NewWebhookRepository(db)
+	schedulerRepo := postgres.NewSchedulerRepository(db)
 
-	router := mbx.SetupRouter(messageHandler, templateHandler)
+	// Services
+	messagingService := messaging.NewMessagingService(twilioSender, twilioFetcher, schedulerRepo)
+	templateService := template.NewTemplateService(twilioFetcher, twilioSender, templateRepo)
+	webhookService := webhook.NewWebhookService(webhookRepo)
+
+	// Worker
+	schedulerWorker := worker.NewSchedulerWorker(schedulerRepo, func(ctx context.Context, to string, body string, templateId string, content string, language string) (*api.ApiV2010Message, error) {
+		if templateId != "" {
+			return twilioSender.SendTemplate(ctx, models.WhatsappTemplate{
+				To:         to,
+				TemplateId: templateId,
+				Content:    content,
+				Language:   language,
+			})
+		}
+		return twilioSender.Send(ctx, models.WhatsappBody{
+			To:   to,
+			Body: body,
+		})
+	}, 1*time.Minute)
+
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	go schedulerWorker.Start(ctx)
+
+	// Handlers
+	messagingHandler := messaging.NewMessagingHandler(messagingService)
+	templateHandler := template.NewTemplateHandler(templateService)
+	webhookHandler := webhook.NewWebhookHandler(webhookService)
+
+	router := mbx.SetupRouter(messagingHandler, templateHandler, webhookHandler)
 
 	server := &http.Server{
 		Addr:    ":8765",
@@ -56,15 +111,13 @@ func main() {
 	}()
 
 	// Wait for interrupt signal to gracefully shutdown the server
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
-	<-quit
+	<-ctx.Done()
 	log.Println("Shutting down server...")
 
 	// Give outstanding requests 30 seconds to complete
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	if err := server.Shutdown(ctx); err != nil {
+	if err := server.Shutdown(shutdownCtx); err != nil {
 		log.Fatalf("Server forced to shutdown: %v", err)
 	}
 

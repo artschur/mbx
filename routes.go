@@ -1,7 +1,9 @@
 package mbx
 
 import (
-	"mbx/handler"
+	"mbx/messaging"
+	"mbx/template"
+	"mbx/webhook"
 	"net/http"
 )
 
@@ -24,21 +26,27 @@ func CORSMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func SetupRouter(messageHandler *handler.MessageHandler, templateHandler *handler.TemplateHandler) http.Handler {
+func SetupRouter(
+	messagingHandler *messaging.MessagingHandler,
+	templateHandler *template.TemplateHandler,
+	webhookHandler *webhook.WebhookHandler,
+) http.Handler {
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("GET /messages", messageHandler.GetMessages)
-	mux.HandleFunc("GET /messages/templates", templateHandler.GetScheduledMessages)
-	mux.HandleFunc("POST /messages/cancel", messageHandler.CancelMessage)
+	mux.HandleFunc("GET /messages", messagingHandler.GetMessages)
+	mux.HandleFunc("GET /messages/templates", messagingHandler.GetScheduledMessages)
+	mux.HandleFunc("POST /messages/cancel", messagingHandler.CancelMessage)
 
 	mux.HandleFunc("GET /templates", templateHandler.GetTemplates)
 	mux.HandleFunc("POST /templates", templateHandler.CreateTemplate)
 	mux.HandleFunc("GET /templates/services", templateHandler.ListMessagingServices)
 
-	mux.HandleFunc("POST /send-message", messageHandler.NormalMessage)
-	mux.HandleFunc("POST /send-template", templateHandler.TemplateMessage)
+	mux.HandleFunc("POST /send-message", messagingHandler.NormalMessage)
+	mux.HandleFunc("POST /send-template", messagingHandler.TemplateMessage)
 
-	// mux.HandleFunc("POST /callbacks/twilio", messageHandler.GetMessages)
+	// Webhook and Status
+	mux.HandleFunc("POST /webhooks/twilio", webhookHandler.PostTwilioStatus)
+	mux.HandleFunc("GET /webhooks", webhookHandler.ListWebhooks)
 
 	return CORSMiddleware(mux)
 }
