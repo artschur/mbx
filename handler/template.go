@@ -10,11 +10,11 @@ import (
 )
 
 type TemplateHandler struct {
-	sender  sender.WhatsappSender
+	sender  sender.WhatsappTemplate
 	fetcher sender.WhatsappFetcher
 }
 
-func NewTemplateHandler(whatsapp sender.WhatsappSender, fetcher sender.WhatsappFetcher) *TemplateHandler {
+func NewTemplateHandler(whatsapp sender.WhatsappTemplate, fetcher sender.WhatsappFetcher) *TemplateHandler {
 	return &TemplateHandler{
 		sender:  whatsapp,
 		fetcher: fetcher,

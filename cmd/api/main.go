@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"log/slog"
 	"mbx"
@@ -30,7 +31,7 @@ func main() {
 	cfg := &sender.Config{
 		TwilioAccountSID: accountSid,
 		TwilioAuthToken:  authToken,
-		TwilioFromNumber: fromNumber,
+		TwilioFromNumber: fmt.Sprintf("whatsapp:%s", fromNumber),
 	}
 
 	twilioClient := sender.NewTwilioClient(cfg)
@@ -38,7 +39,7 @@ func main() {
 	twilioSender := sender.NewTwilioSender(twilioClient, cfg)
 	twilioFetcher := sender.NewTwilioFetcher(twilioClient, cfg)
 
-	messageHandler := handler.NewMessageHandler(twilioSender, twilioFetcher)
+	messageHandler := handler.NewMessageHandler(twilioSender, twilioSender, twilioFetcher)
 	templateHandler := handler.NewTemplateHandler(twilioSender, twilioFetcher)
 
 	router := mbx.SetupRouter(messageHandler, templateHandler)
