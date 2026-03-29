@@ -5,20 +5,23 @@ import (
 	"log/slog"
 	"mbx/models"
 	"mbx/sender"
+	"mbx/templates"
 	"net/http"
 	"slices"
 	"time"
 )
 
 type MessageHandler struct {
-	sender  sender.WhatsappSender
-	fetcher sender.WhatsappFetcher
+	sender         sender.Whatsapp
+	templateSender sender.WhatsappTemplate
+	fetcher        sender.WhatsappFetcher
 }
 
-func NewMessageHandler(whatsapp sender.WhatsappSender, fetcher sender.WhatsappFetcher) *MessageHandler {
+func NewMessageHandler(whatsapp sender.Whatsapp, templateSender sender.WhatsappTemplate, fetcher sender.WhatsappFetcher) *MessageHandler {
 	return &MessageHandler{
-		sender:  whatsapp,
-		fetcher: fetcher,
+		sender:         whatsapp,
+		templateSender: templateSender,
+		fetcher:        fetcher,
 	}
 }
 
@@ -142,4 +145,37 @@ func (h *MessageHandler) CancelMessage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *MessageHandler) SendTemplate(w http.ResponseWriter, r *http.Request) {
+	incReq := struct {
+		TemplateID string `json:"template_id"`
+	}{}
+	if err := json.NewDecoder(r.Body).Decode(&incReq); err != nil {
+		slog.Error("Failed to decode send template request", "error", err)
+		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		return
+	}
+
+	if incReq.TemplateID == "" {
+		http.Error(w, "Template ID cannot be empty", http.StatusBadRequest)
+		return
+	}
+
+	msgResponse, err := h.templateSender.SendTemplate(r.Context(), templates.WhatsappTemplate{
+		TemplateId: incReq.TemplateID,
+	})
+	if err != nil {
+		slog.Error("Failed to send template", "error", err, "template_id", incReq.TemplateID)
+		http.Error(w, "Failed to send template: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	err = json.NewEncoder(w).Encode(msgResponse)
+	if err != nil {
+		slog.Error("Failed to encode template response", "error", err)
+		http.Error(w, "Failed to encode template response", http.StatusInternalServerError)
+	}
 }

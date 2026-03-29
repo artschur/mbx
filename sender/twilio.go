@@ -18,10 +18,10 @@ type TwilioSender struct {
 	client *twilio.RestClient
 }
 
-var _ WhatsappSender = (*TwilioSender)(nil)
+var _ Whatsapp = (*TwilioSender)(nil)
+var _ WhatsappTemplate = (*TwilioSender)(nil)
 
 func NewTwilioClient(cfg *Config) *twilio.RestClient {
-
 	client := twilio.NewRestClientWithParams(twilio.ClientParams{
 		Username:   cfg.TwilioAccountSID,
 		Password:   cfg.TwilioAuthToken,

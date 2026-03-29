@@ -6,19 +6,23 @@ import (
 	"mbx/templates"
 )
 
-type templateService interface {
-	List(context.Context) ([]templates.SavedTemplate, error)
-	Create(context.Context, templates.CreateTemplateDTO) (*templates.SavedTemplate, error)
-}
-
 type whatsappService interface {
 	Send(context.Context, models.WhatsappBody)
+	SendTemplate(context.Context, *templates.WhatsappTemplate) error
 }
 
 type Service struct {
-	templateService templateService
+	whatsappService whatsappService
 }
 
-func NewService(templateService templateService) *Service {
-	return &Service{templateService: templateService}
+func NewService(whatsappService whatsappService) *Service {
+	return &Service{whatsappService: whatsappService}
+}
+
+func (s *Service) SendTemplate(ctx context.Context, template *templates.WhatsappTemplate) error {
+	return s.whatsappService.SendTemplate(ctx, template)
+}
+
+func (s *Service) Send(ctx context.Context, message models.WhatsappBody) {
+	s.whatsappService.Send(ctx, message)
 }
