@@ -7,7 +7,7 @@ import (
 )
 
 type whatsappService interface {
-	Send(context.Context, models.WhatsappBody)
+	Send(context.Context, models.WhatsappBody) error
 	SendTemplate(context.Context, *templates.WhatsappTemplate) error
 }
 
@@ -23,6 +23,6 @@ func (s *Service) SendTemplate(ctx context.Context, template *templates.Whatsapp
 	return s.whatsappService.SendTemplate(ctx, template)
 }
 
-func (s *Service) Send(ctx context.Context, message models.WhatsappBody) {
-	s.whatsappService.Send(ctx, message)
+func (s *Service) Send(ctx context.Context, message models.WhatsappBody) error {
+	return s.whatsappService.Send(ctx, message)
 }
