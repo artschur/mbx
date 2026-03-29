@@ -1,8 +1,6 @@
 package templates
 
 import (
-	"time"
-
 	content "github.com/twilio/twilio-go/rest/content/v1"
 )
 
@@ -127,17 +125,15 @@ type SavedTemplate struct {
 }
 
 type WhatsappTemplateDTO struct {
-	To          string            `json:"to"`
-	TimeFromNow string            `json:"time_from_now"`
-	TemplateId  string            `json:"template"`
-	Content     map[string]string `json:"content"`
-	Language    string            `json:"language"`
+	To         string            `json:"to"`
+	TemplateId string            `json:"template"`
+	Content    map[string]string `json:"content"`
+	Language   string            `json:"language"`
 }
 
 type WhatsappTemplate struct {
-	To          string     `json:"to"`
-	TimeFromNow *time.Time `json:"time_from_now"`
-	TemplateId  string     `json:"template"`
-	Content     string     `json:"content"`
-	Language    string     `json:"language"`
+	To         string `json:"to"`
+	TemplateId string `json:"template"`
+	Content    string `json:"content"`
+	Language   string `json:"language"`
 }

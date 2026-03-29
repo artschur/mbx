@@ -45,10 +45,6 @@ func (s *TwilioSender) Send(ctx context.Context, message models.WhatsappBody) (*
 		Body: &message.Body,
 	}
 
-	if message.TimeFromNow != nil {
-		messageParams.SendAt = message.TimeFromNow
-	}
-
 	resp, err := s.client.Api.CreateMessage(messageParams)
 	if err != nil {
 		return nil, fmt.Errorf("failed to send message: %v", err)
@@ -73,10 +69,6 @@ func (s *TwilioSender) SendTemplate(ctx context.Context, template templates.What
 	slog.Info("Sending template message with parameters",
 		"template_id", template.TemplateId,
 		"content_variables", template.Content)
-
-	if template.TimeFromNow != nil {
-		messageParams.SendAt = template.TimeFromNow
-	}
 
 	resp, err := s.client.Api.CreateMessage(messageParams)
 	if err != nil {

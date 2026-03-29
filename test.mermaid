@@ -1,0 +1,43 @@
+classDiagram
+    %% Interfaces
+    class TemplateRepo {
+        <<interface>>
+        +ListTemplates() []*Saved, error
+        +CreateTemplate(*CreateInput) (*Saved, error)
+        +GetTemplate(string) (*Saved, error)
+        +DeleteTemplate(string) error
+    }
+    class MessageSender {
+        <<interface>>
+        +Send(context.Context, T) (Persisted, error)
+    }
+    class WhatsappSender {
+        <<interface>>
+        +SendTemplate(context.Context, *Whatsapp) error
+        +CancelMessage(context.Context, string) error
+        +CreateTemplate(context.Context, *WhatsappCreate) (*Saved, error)
+    }
+    class Service {
+        <<interface>>
+        +HandleWhatsAppSend(...)
+        +HandleTemplateList(...)
+        %% any application‑level methods you need
+    }
+    %% Concrete implementation
+    class TwilioSender {
+        -cfg *config.Config
+        -client *twilio.RestClient
+        +NewTwilioSender(*twilio.RestClient, *config.Config) *TwilioSender
+        +Send(context.Context, T) (Persisted, error)
+        +SendTemplate(context.Context, *Whatsapp) error
+        +CancelMessage(context.Context, string) error
+        +CreateTemplate(context.Context, *WhatsappCreate) (*Saved, error)
+        +ListTemplates() []*Saved, error
+    }
+    %% Relationships
+    TwilioSender ..|> TemplateRepo : implements
+    TwilioSender ..|> MessageSender : implements
+    TwilioSender ..|> WhatsappSender : implements
+    Service ..> TemplateRepo : uses
+    Service ..> MessageSender : uses
+    Service ..> WhatsappSender : uses

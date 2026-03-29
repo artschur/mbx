@@ -14,18 +14,22 @@ type Repository interface {
 	Create(context.Context, models.ScheduledMessage) error
 }
 
-type service struct {
+type Service struct {
 	repo Repository
 }
 
-func NewService(repo Repository) *service {
-	return &service{repo: repo}
+func NewService(repo Repository) *Service {
+	return &Service{repo: repo}
 }
 
-func (s *service) FindById(ctx context.Context, id uuid.UUID) (*models.ScheduledMessage, error) {
+func (s *Service) FindById(ctx context.Context, id uuid.UUID) (*models.ScheduledMessage, error) {
 	return s.repo.FindById(ctx, id)
 }
 
-func (s *service) Create(ctx context.Context, message models.ScheduledMessage) error {
+func (s *Service) Create(ctx context.Context, message models.ScheduledMessage) error {
 	return s.repo.Create(ctx, message)
+}
+
+func (s *Service) ListUpcoming(ctx context.Context, duration time.Duration) ([]models.ScheduledMessage, error) {
+	return s.repo.ListUpcoming(ctx, duration)
 }

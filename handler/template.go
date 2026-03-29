@@ -74,13 +74,6 @@ func (h *TemplateHandler) Send(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Parse optional scheduled time
-	scheduledTime, err := parseScheduledTime(req.TimeFromNow)
-	if err != nil {
-		http.Error(w, "Invalid time format. Use RFC3339 format", http.StatusBadRequest)
-		return
-	}
-
 	var contentStr string
 	if len(req.Content) > 0 {
 		contentJSON, err := json.Marshal(req.Content)
@@ -95,11 +88,10 @@ func (h *TemplateHandler) Send(w http.ResponseWriter, r *http.Request) {
 	slog.Info("Marshaled content variables", "content_json", contentStr)
 
 	whatsappTemplate := templates.WhatsappTemplate{
-		To:          req.To,
-		TemplateId:  req.TemplateId,
-		Content:     contentStr,
-		Language:    req.Language,
-		TimeFromNow: scheduledTime,
+		To:         req.To,
+		TemplateId: req.TemplateId,
+		Content:    contentStr,
+		Language:   req.Language,
 	}
 
 	msgResponse, err := h.sender.SendTemplate(r.Context(), whatsappTemplate)

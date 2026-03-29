@@ -92,17 +92,9 @@ func (h *MessageHandler) NormalMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Parse optional scheduled time
-	scheduledTime, err := parseScheduledTime(req.TimeFromNow)
-	if err != nil {
-		http.Error(w, "Invalid time format. Use RFC3339 format", http.StatusBadRequest)
-		return
-	}
-
 	whatsappMessage := models.WhatsappBody{
-		To:          fmt.Sprintf("whatsapp:%s", req.To),
-		Body:        req.Body,
-		TimeFromNow: scheduledTime,
+		To:   fmt.Sprintf("whatsapp:%s", req.To),
+		Body: req.Body,
 	}
 
 	msgResponse, err := h.sender.Send(r.Context(), whatsappMessage)
