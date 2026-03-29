@@ -3,13 +3,14 @@ package sender
 import (
 	"context"
 	"mbx/models"
+	"mbx/templates"
 
 	api "github.com/twilio/twilio-go/rest/api/v2010"
 )
 
 type WhatsappSender interface {
 	Send(context.Context, models.WhatsappBody) (*api.ApiV2010Message, error)
-	SendTemplate(context.Context, models.WhatsappTemplate) (*api.ApiV2010Message, error)
+	SendTemplate(context.Context, templates.WhatsappTemplate) (*api.ApiV2010Message, error)
 	CancelMessage(ctx context.Context, twilioId string) error
-	CreateTemplate(context.Context, models.CreateTemplateDTO) (*models.SavedTemplate, error)
+	CreateTemplate(context.Context, templates.CreateTemplateDTO) (*templates.SavedTemplate, error)
 }

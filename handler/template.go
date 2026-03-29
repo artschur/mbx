@@ -3,8 +3,8 @@ package handler
 import (
 	"encoding/json"
 	"log/slog"
-	"mbx/models"
 	"mbx/sender"
+	"mbx/templates"
 	"net/http"
 	"time"
 )
@@ -55,8 +55,8 @@ func (h *TemplateHandler) GetScheduledMessages(w http.ResponseWriter, r *http.Re
 	}
 }
 
-func (h *TemplateHandler) TemplateMessage(w http.ResponseWriter, r *http.Request) {
-	var req models.WhatsappTemplateDTO
+func (h *TemplateHandler) Send(w http.ResponseWriter, r *http.Request) {
+	var req templates.WhatsappTemplateDTO
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request payload", http.StatusBadRequest)
 		return
@@ -94,7 +94,7 @@ func (h *TemplateHandler) TemplateMessage(w http.ResponseWriter, r *http.Request
 
 	slog.Info("Marshaled content variables", "content_json", contentStr)
 
-	whatsappTemplate := models.WhatsappTemplate{
+	whatsappTemplate := templates.WhatsappTemplate{
 		To:          req.To,
 		TemplateId:  req.TemplateId,
 		Content:     contentStr,
@@ -137,7 +137,7 @@ func (h *TemplateHandler) GetTemplates(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *TemplateHandler) CreateTemplate(w http.ResponseWriter, r *http.Request) {
-	var req models.CreateTemplateDTO
+	var req templates.CreateTemplateDTO
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		slog.Error("Failed to decode create template request", "error", err)
 		http.Error(w, "Invalid request payload", http.StatusBadRequest)

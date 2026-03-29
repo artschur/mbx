@@ -36,7 +36,7 @@ func SetupRouter(messageHandler *handler.MessageHandler, templateHandler *handle
 	mux.HandleFunc("GET /templates/services", templateHandler.ListMessagingServices)
 
 	mux.HandleFunc("POST /send-message", messageHandler.NormalMessage)
-	mux.HandleFunc("POST /send-template", templateHandler.TemplateMessage)
+	mux.HandleFunc("POST /send-template", templateHandler.Send)
 
 	// mux.HandleFunc("POST /callbacks/twilio", messageHandler.GetMessages)
 

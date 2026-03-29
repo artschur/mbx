@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"mbx/models"
+	"mbx/templates"
 
 	"github.com/twilio/twilio-go"
 	api "github.com/twilio/twilio-go/rest/api/v2010"
@@ -56,7 +57,7 @@ func (s *TwilioSender) Send(ctx context.Context, message models.WhatsappBody) (*
 	return resp, nil
 }
 
-func (s *TwilioSender) SendTemplate(ctx context.Context, template models.WhatsappTemplate) (*api.ApiV2010Message, error) {
+func (s *TwilioSender) SendTemplate(ctx context.Context, template templates.WhatsappTemplate) (*api.ApiV2010Message, error) {
 	messageParams := &api.CreateMessageParams{}
 
 	messageParams.SetTo(fmt.Sprintf("whatsapp:%s", template.To))
@@ -86,7 +87,7 @@ func (s *TwilioSender) SendTemplate(ctx context.Context, template models.Whatsap
 	return resp, nil
 }
 
-func (s *TwilioSender) CreateTemplate(ctx context.Context, dto models.CreateTemplateDTO) (*models.SavedTemplate, error) {
+func (s *TwilioSender) CreateTemplate(ctx context.Context, dto templates.CreateTemplateDTO) (*templates.SavedTemplate, error) {
 	contentService := content.NewApiServiceWithClient(s.client.Client)
 
 	// Convert DTO to Twilio's Types struct
@@ -153,7 +154,7 @@ func (s *TwilioSender) CreateTemplate(ctx context.Context, dto models.CreateTemp
 		}
 	}
 
-	createdTemplate := &models.SavedTemplate{
+	createdTemplate := &templates.SavedTemplate{
 		ContentId:    *createdContent.Sid,
 		FriendlyName: friendlyName,
 		Language:     language,

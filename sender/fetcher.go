@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"mbx/models"
+	"mbx/templates"
 	"time"
 
 	"github.com/twilio/twilio-go"
@@ -14,7 +15,7 @@ import (
 )
 
 type WhatsappFetcher interface {
-	GetTemplates(context.Context) ([]models.SavedTemplate, error)
+	GetTemplates(context.Context) ([]templates.SavedTemplate, error)
 	GetMessages(ctx context.Context, after time.Time) ([]models.SentMessage, error)
 	GetScheduledMessages(ctx context.Context, after time.Time) ([]models.SentMessage, error)
 	ListMessagingServices(ctx context.Context) ([]models.MessagingService, error)
@@ -118,7 +119,7 @@ func (s *TwilioFetcher) GetMessages(ctx context.Context, after time.Time) ([]mod
 	return sentMessages, nil
 }
 
-func (s *TwilioFetcher) GetTemplates(ctx context.Context) ([]models.SavedTemplate, error) {
+func (s *TwilioFetcher) GetTemplates(ctx context.Context) ([]templates.SavedTemplate, error) {
 	contentService := content.NewApiServiceWithClient(s.client.Client)
 
 	contentParams := &content.ListContentParams{}
@@ -133,7 +134,7 @@ func (s *TwilioFetcher) GetTemplates(ctx context.Context) ([]models.SavedTemplat
 
 	slog.Info("Fetched WhatsApp templates", "count", len(contents))
 
-	var templatesOut []models.SavedTemplate = make([]models.SavedTemplate, len(contents))
+	var templatesOut []templates.SavedTemplate = make([]templates.SavedTemplate, len(contents))
 	for i, c := range contents {
 		var body string
 		if c.Types != nil {
@@ -185,7 +186,7 @@ func (s *TwilioFetcher) GetTemplates(ctx context.Context) ([]models.SavedTemplat
 			contentId = *c.Sid
 		}
 
-		template := models.SavedTemplate{
+		template := templates.SavedTemplate{
 			ContentId:    contentId,
 			FriendlyName: friendlyName,
 			Language:     language,
