@@ -3,8 +3,8 @@ package schedules
 import (
 	"context"
 	"log/slog"
-	"mbx/messaging"
 	"mbx/models"
+	"mbx/sender"
 	"mbx/templates"
 	"time"
 )
@@ -14,16 +14,18 @@ type Config struct {
 }
 
 type Worker struct {
-	config  Config
-	service messaging.Service
-	repo    Repository
+	config Config
+	w      sender.Whatsapp
+	wt     sender.WhatsappTemplate
+	repo   Repository
 }
 
-func NewWorker(config Config, service messaging.Service, repo Repository) *Worker {
+func NewWorker(config Config, w sender.Whatsapp, wt sender.WhatsappTemplate, repo Repository) *Worker {
 	return &Worker{
-		config:  config,
-		service: service,
-		repo:    repo,
+		config: config,
+		w:      w,
+		wt:     wt,
+		repo:   repo,
 	}
 }
 
@@ -51,8 +53,8 @@ func (w *Worker) Run(ctx context.Context) {
 func (w *Worker) Send(ctx context.Context, msg models.ScheduledMessage) {
 	switch msg.Type {
 	case models.ScheduleTypeTemplate:
-		err := w.service.SendTemplate(ctx,
-			&templates.WhatsappTemplate{
+		_, err := w.wt.SendTemplate(ctx,
+			templates.WhatsappTemplate{
 				To:         msg.To,
 				TemplateId: msg.ProviderTemplateId,
 				Content:    msg.Content,
@@ -63,7 +65,7 @@ func (w *Worker) Send(ctx context.Context, msg models.ScheduledMessage) {
 		}
 
 	case models.ScheduleTypeFreeform:
-		err := w.service.Send(ctx, models.WhatsappBody{
+		_, err := w.w.Send(ctx, models.WhatsappBody{
 			To:   msg.To,
 			Body: msg.Content,
 		})
