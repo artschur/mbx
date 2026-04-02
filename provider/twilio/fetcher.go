@@ -1,10 +1,11 @@
-package sender
+package twilio
 
 import (
 	"context"
 	"fmt"
 	"log/slog"
 	"mbx/models"
+	"mbx/sender"
 	"mbx/templates"
 	"time"
 
@@ -28,7 +29,7 @@ type MessagingServiceFetcher interface {
 var _ WhatsappFetcher = (*TwilioFetcher)(nil)
 
 type TwilioFetcher struct {
-	cfg    *Config
+	cfg    *sender.Config
 	client *twilio.RestClient
 }
 
@@ -40,7 +41,7 @@ func sp[T any](ptr *T) T {
 	return *ptr
 }
 
-func NewTwilioFetcher(client *twilio.RestClient, cfg *Config) *TwilioFetcher {
+func NewTwilioFetcher(client *twilio.RestClient, cfg *sender.Config) *TwilioFetcher {
 	return &TwilioFetcher{
 		client: client,
 		cfg:    cfg,

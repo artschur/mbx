@@ -1,10 +1,11 @@
-package sender
+package twilio
 
 import (
 	"context"
 	"fmt"
 	"log/slog"
 	"mbx/models"
+	"mbx/sender"
 	"mbx/templates"
 
 	"github.com/twilio/twilio-go"
@@ -14,14 +15,14 @@ import (
 )
 
 type TwilioSender struct {
-	cfg    *Config
+	cfg    *sender.Config
 	client *twilio.RestClient
 }
 
-var _ Whatsapp = (*TwilioSender)(nil)
-var _ WhatsappTemplate = (*TwilioSender)(nil)
+var _ sender.Whatsapp = (*TwilioSender)(nil)
+var _ sender.WhatsappTemplate = (*TwilioSender)(nil)
 
-func NewTwilioClient(cfg *Config) *twilio.RestClient {
+func NewTwilioClient(cfg *sender.Config) *twilio.RestClient {
 	client := twilio.NewRestClientWithParams(twilio.ClientParams{
 		Username:   cfg.TwilioAccountSID,
 		Password:   cfg.TwilioAuthToken,
@@ -31,7 +32,7 @@ func NewTwilioClient(cfg *Config) *twilio.RestClient {
 	return client
 }
 
-func NewTwilioSender(client *twilio.RestClient, cfg *Config) *TwilioSender {
+func NewSender(client *twilio.RestClient, cfg *sender.Config) *TwilioSender {
 	return &TwilioSender{
 		client: client,
 		cfg:    cfg,

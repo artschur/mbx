@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"mbx/models"
+	"mbx/provider/twilio"
 	"mbx/sender"
 	"net/http"
 	"slices"
@@ -14,10 +15,10 @@ import (
 type MessageHandler struct {
 	sender         sender.Whatsapp
 	templateSender sender.WhatsappTemplate
-	fetcher        sender.WhatsappFetcher
+	fetcher        twilio.WhatsappFetcher
 }
 
-func NewMessageHandler(whatsapp sender.Whatsapp, templateSender sender.WhatsappTemplate, fetcher sender.WhatsappFetcher) *MessageHandler {
+func NewMessageHandler(whatsapp sender.Whatsapp, templateSender sender.WhatsappTemplate, fetcher twilio.WhatsappFetcher) *MessageHandler {
 	return &MessageHandler{
 		sender:         whatsapp,
 		templateSender: templateSender,

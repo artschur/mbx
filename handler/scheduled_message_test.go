@@ -99,8 +99,8 @@ func TestCreateScheduledMessage_Template(t *testing.T) {
 	if response.Type != models.ScheduleTypeTemplate {
 		t.Errorf("Expected type %s, got %s", models.ScheduleTypeTemplate, response.Type)
 	}
-	if response.ProviderTemplateId != req.ProviderTemplateId {
-		t.Errorf("Expected ProviderTemplateId %s, got %s", req.ProviderTemplateId, response.ProviderTemplateId)
+	if response.ProviderId != req.ProviderTemplateId {
+		t.Errorf("Expected ProviderTemplateId %s, got %s", req.ProviderTemplateId, response.ProviderId)
 	}
 }
 
@@ -315,14 +315,14 @@ func TestGetScheduledMessage_Success(t *testing.T) {
 
 	msgId := uuid.New()
 	expectedMessage := &models.ScheduledMessage{
-		Id:                 msgId,
-		To:                 "1234567890",
-		Content:            "Test message",
-		SendAt:             time.Now().Add(1 * time.Hour),
-		ProviderTemplateId: "",
-		Type:               models.ScheduleTypeFreeform,
-		Status:             models.StatusPending,
-		CreatedAt:          time.Now(),
+		Id:         msgId,
+		To:         "1234567890",
+		Content:    "Test message",
+		SendAt:     time.Now().Add(1 * time.Hour),
+		ProviderId: "",
+		Type:       models.ScheduleTypeFreeform,
+		Status:     models.StatusPending,
+		CreatedAt:  time.Now(),
 	}
 
 	mockRepo.EXPECT().
@@ -461,14 +461,14 @@ func TestGetScheduledMessage_TemplateMessage(t *testing.T) {
 
 	msgId := uuid.New()
 	expectedMessage := &models.ScheduledMessage{
-		Id:                 msgId,
-		To:                 "1234567890",
-		Content:            "Welcome {{1}}",
-		SendAt:             time.Now().Add(2 * time.Hour),
-		ProviderTemplateId: "template-123",
-		Type:               models.ScheduleTypeTemplate,
-		Status:             models.StatusPending,
-		CreatedAt:          time.Now(),
+		Id:         msgId,
+		To:         "1234567890",
+		Content:    "Welcome {{1}}",
+		SendAt:     time.Now().Add(2 * time.Hour),
+		ProviderId: "template-123",
+		Type:       models.ScheduleTypeTemplate,
+		Status:     models.StatusPending,
+		CreatedAt:  time.Now(),
 	}
 
 	mockRepo.EXPECT().
@@ -494,7 +494,7 @@ func TestGetScheduledMessage_TemplateMessage(t *testing.T) {
 	if response.Type != models.ScheduleTypeTemplate {
 		t.Errorf("Expected type %s, got %s", models.ScheduleTypeTemplate, response.Type)
 	}
-	if response.ProviderTemplateId != "template-123" {
-		t.Errorf("Expected ProviderTemplateId template-123, got %s", response.ProviderTemplateId)
+	if response.ProviderId != "template-123" {
+		t.Errorf("Expected ProviderTemplateId template-123, got %s", response.ProviderId)
 	}
 }

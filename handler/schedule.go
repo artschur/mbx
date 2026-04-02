@@ -62,14 +62,14 @@ func (h *ScheduledMessageHandler) CreateScheduledMessage(w http.ResponseWriter, 
 	}
 
 	message := models.ScheduledMessage{
-		Id:                 uuid.New(),
-		To:                 req.To,
-		Content:            req.Content,
-		SendAt:             req.SendAt,
-		ProviderTemplateId: req.ProviderTemplateId,
-		Type:               req.Type,
-		Status:             models.StatusPending,
-		CreatedAt:          time.Now(),
+		Id:         uuid.New(),
+		To:         req.To,
+		Content:    req.Content,
+		SendAt:     req.SendAt,
+		ProviderId: req.ProviderTemplateId,
+		Type:       req.Type,
+		Status:     models.StatusPending,
+		CreatedAt:  time.Now(),
 	}
 
 	err := h.scheduleService.Create(r.Context(), message)

@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"log/slog"
+	"mbx/provider/twilio"
 	"mbx/sender"
 	"mbx/templates"
 	"net/http"
@@ -11,10 +12,10 @@ import (
 
 type TemplateHandler struct {
 	sender  sender.WhatsappTemplate
-	fetcher sender.WhatsappFetcher
+	fetcher twilio.WhatsappFetcher
 }
 
-func NewTemplateHandler(whatsapp sender.WhatsappTemplate, fetcher sender.WhatsappFetcher) *TemplateHandler {
+func NewTemplateHandler(whatsapp sender.WhatsappTemplate, fetcher twilio.WhatsappFetcher) *TemplateHandler {
 	return &TemplateHandler{
 		sender:  whatsapp,
 		fetcher: fetcher,

@@ -14,12 +14,12 @@ const (
 )
 
 type ScheduledMessage struct {
-	Id                 uuid.UUID
-	To                 string
-	SendAt             time.Time
-	Content            string
-	ProviderTemplateId string
-	Type               ScheduledMessageType
-	Status             Status
-	CreatedAt          time.Time
+	Id         uuid.UUID
+	To         string
+	SendAt     time.Time
+	Content    string
+	ProviderId string
+	Type       ScheduledMessageType
+	Status     Status
+	CreatedAt  time.Time
 }

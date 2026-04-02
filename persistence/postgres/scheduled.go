@@ -32,7 +32,7 @@ func (r *MessageRepository) Create(ctx context.Context, message models.Scheduled
 		message.To,
 		message.SendAt,
 		message.Content,
-		message.ProviderTemplateId,
+		message.ProviderId,
 		message.Type,
 		message.Status,
 		message.CreatedAt,
@@ -51,7 +51,7 @@ func (r *MessageRepository) FindById(ctx context.Context, id uuid.UUID) (*models
 		WHERE id = $1
 		`, id)
 	var message models.ScheduledMessage
-	err := row.Scan(&message.Id, &message.To, &message.SendAt, &message.Content, &message.ProviderTemplateId, &message.Type, &message.Status, &message.CreatedAt)
+	err := row.Scan(&message.Id, &message.To, &message.SendAt, &message.Content, &message.ProviderId, &message.Type, &message.Status, &message.CreatedAt)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
@@ -75,7 +75,7 @@ func (r *MessageRepository) ListUpcoming(ctx context.Context, duration time.Dura
 	var messages []models.ScheduledMessage
 	for rows.Next() {
 		var message models.ScheduledMessage
-		if err := rows.Scan(&message.Id, &message.To, &message.SendAt, &message.Content, &message.ProviderTemplateId, &message.Type, &message.Status, &message.CreatedAt); err != nil {
+		if err := rows.Scan(&message.Id, &message.To, &message.SendAt, &message.Content, &message.ProviderId, &message.Type, &message.Status, &message.CreatedAt); err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
 				return nil, nil
 			}

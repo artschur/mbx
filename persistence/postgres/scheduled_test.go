@@ -130,14 +130,14 @@ func TestScheduledMessages_Create(t *testing.T) {
 
 	id := uuid.New()
 	scheduledMessage := models.ScheduledMessage{
-		Id:                 id,
-		To:                 "1234567890",
-		SendAt:             time.Now().Add(10 * time.Minute),
-		Content:            "Test message",
-		ProviderTemplateId: "template-123",
-		Type:               models.ScheduleTypeFreeform,
-		Status:             models.StatusPending,
-		CreatedAt:          time.Now(),
+		Id:         id,
+		To:         "1234567890",
+		SendAt:     time.Now().Add(10 * time.Minute),
+		Content:    "Test message",
+		ProviderId: "template-123",
+		Type:       models.ScheduleTypeFreeform,
+		Status:     models.StatusPending,
+		CreatedAt:  time.Now(),
 	}
 
 	err := messageRepo.Create(ctx, scheduledMessage)
@@ -159,14 +159,14 @@ func TestScheduledMessages_FindById(t *testing.T) {
 
 	id := uuid.New()
 	scheduledMessage := models.ScheduledMessage{
-		Id:                 id,
-		To:                 "9876543210",
-		SendAt:             time.Now().Add(5 * time.Minute),
-		Content:            "Another message",
-		ProviderTemplateId: "",
-		Type:               models.ScheduleTypeFreeform,
-		Status:             models.StatusPending,
-		CreatedAt:          time.Now(),
+		Id:         id,
+		To:         "9876543210",
+		SendAt:     time.Now().Add(5 * time.Minute),
+		Content:    "Another message",
+		ProviderId: "",
+		Type:       models.ScheduleTypeFreeform,
+		Status:     models.StatusPending,
+		CreatedAt:  time.Now(),
 	}
 
 	err := messageRepo.Create(ctx, scheduledMessage)
@@ -195,14 +195,14 @@ func TestScheduledMessages_Template(t *testing.T) {
 
 	id := uuid.New()
 	scheduledMessage := models.ScheduledMessage{
-		Id:                 id,
-		To:                 "5555555555",
-		SendAt:             time.Now().Add(20 * time.Minute),
-		Content:            "Welcome {{name}}",
-		ProviderTemplateId: "template-456",
-		Type:               models.ScheduleTypeTemplate,
-		Status:             models.StatusPending,
-		CreatedAt:          time.Now(),
+		Id:         id,
+		To:         "5555555555",
+		SendAt:     time.Now().Add(20 * time.Minute),
+		Content:    "Welcome {{name}}",
+		ProviderId: "template-456",
+		Type:       models.ScheduleTypeTemplate,
+		Status:     models.StatusPending,
+		CreatedAt:  time.Now(),
 	}
 
 	err := messageRepo.Create(ctx, scheduledMessage)
@@ -212,7 +212,7 @@ func TestScheduledMessages_Template(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, gotten)
 	require.Equal(t, models.ScheduleTypeTemplate, gotten.Type)
-	require.Equal(t, "template-456", gotten.ProviderTemplateId)
+	require.Equal(t, "template-456", gotten.ProviderId)
 }
 
 func TestScheduledMessages_ListUpcoming(t *testing.T) {
@@ -222,14 +222,14 @@ func TestScheduledMessages_ListUpcoming(t *testing.T) {
 	id := uuid.New()
 	futureTime := time.Now().UTC().Add(10 * time.Minute)
 	scheduledMessage := models.ScheduledMessage{
-		Id:                 id,
-		To:                 "7777777777",
-		SendAt:             futureTime,
-		Content:            "Future message",
-		ProviderTemplateId: "",
-		Type:               models.ScheduleTypeFreeform,
-		Status:             models.StatusPending,
-		CreatedAt:          time.Now(),
+		Id:         id,
+		To:         "7777777777",
+		SendAt:     futureTime,
+		Content:    "Future message",
+		ProviderId: "",
+		Type:       models.ScheduleTypeFreeform,
+		Status:     models.StatusPending,
+		CreatedAt:  time.Now(),
 	}
 
 	err := messageRepo.Create(ctx, scheduledMessage)

@@ -56,7 +56,7 @@ func (w *Worker) Send(ctx context.Context, msg models.ScheduledMessage) {
 		_, err := w.wt.SendTemplate(ctx,
 			templates.WhatsappTemplate{
 				To:         msg.To,
-				TemplateId: msg.ProviderTemplateId,
+				TemplateId: msg.ProviderId,
 				Content:    msg.Content,
 				Language:   "pt_BR",
 			})
